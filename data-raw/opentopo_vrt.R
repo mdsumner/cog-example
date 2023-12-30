@@ -6,29 +6,24 @@ vrtti_from_vrt <- function(x, outname, crs = NULL) {
   ex <- vaster::extent_vrt(gsub("/vsicurl/", "", x))
 
   info <- vapour::vapour_raster_info(x)
+  res <- format(c(vaster::x_res(info$dimension, info$extent), vaster::y_res(info$dimension, info$extent)), digits = 12)
   if (is.null(crs)) crs <- info$projection
   tiles <- tibble::tibble(geom = wk::rct(xmin = ex[, "xmin", drop = TRUE], ymin = ex[, "ymin", drop = TRUE],
                                          xmax = ex[, "xmax", drop = TRUE], ymax = ex[, "ymax", drop = TRUE], crs = crs),
                           location = info$filelist[-1L])
   ## create the dummy VRTTI at the command line
-  system(sprintf("gdaltindex %s  %s ", outname, tiles$location[1L]))
-  sf::st_write(sf::st_as_sf(tiles), outname, delete_layer = TRUE)
+  cmd <- sprintf("gdaltindex %s  %s -tr %s %s -ot %s -te %s ", outname, tiles$location[1L], res[1L], res[2L], info$datatype, paste0(info$extent[c(1, 3, 2, 4)], collapse = " "))
+  print(cmd)
+  system(cmd)
+  system(sprintf("gdalinfo %s | grep Size", outname))
+  sf::st_write(sf::st_as_sf(tiles), outname, delete_layer = TRUE, layer_options = c(sprintf("RESX=%s", res[1L]),
+                                                                                    sprintf("RESY=%s", res[2L])))
   outname
 }
 
-vrtti_from_vrt(cop90(), "vrtti/cop90.vrt.gpkg")
 vrtti_from_vrt(cop30(), "vrtti/cop30.vrt.gpkg")
+vrtti_from_vrt(cop90(), "vrtti/cop90.vrt.gpkg")
 
 
 
-## now we have an index of the COP90 and a valid raster index in VRTTI format
-plot(vect("cop90.vrt.gpkg"))
-r <- crop(rast("cop90.vrt.gpkg"), ext(147, 147.5, -43.2, -42.6))
-plot(r)
-plot(vect("cop90.vrt.gpkg"), add = TRUE)
 
-
-## don't use crop (or project without by_util) for larger extents
-r <- project(rast("cop90.vrt.gpkg"), rast(ext(147, 147.5, -43.2, -42.6) + 2, res = 0.1), by_util = TRUE)
-plot(r)
-plot(vect("cop90.vrt.gpkg"), add = TRUE)
