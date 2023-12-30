@@ -16,8 +16,7 @@ vrtti_from_vrt <- function(x, outname, crs = NULL) {
   print(cmd)
   system(cmd)
   system(sprintf("gdalinfo %s | grep Size", outname))
-  sf::st_write(sf::st_as_sf(tiles), outname, delete_layer = TRUE, layer_options = c(sprintf("RESX=%s", res[1L]),
-                                                                                    sprintf("RESY=%s", res[2L])))
+  sf::st_write(sf::st_as_sf(tiles[-1, ]), outname, delete_layer = FALSE, append = TRUE)
   outname
 }
 
