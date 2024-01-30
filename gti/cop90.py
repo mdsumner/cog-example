@@ -91,6 +91,7 @@ for i in range(0, len(xmin)) :
  feature.SetField("location", f'/vsicurl/https://opentopography.s3.sdsc.edu/raster/COP90/{locations[i]}')
  layer.CreateFeature(feature)
  feature = None
+ geom = None
 
 layer = None
 ds = None
