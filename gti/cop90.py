@@ -50,17 +50,17 @@ for child in root:
             locations.append(source.text)
             
 layer_name = "cop90"
-fgb_path = f"{layer_name}.fgb"
+fgb_path = f"{layer_name}.gti.gpkg"
 
 sr = osr.SpatialReference()
 sr.SetFromUserInput("OGC:CRS84")
 
-ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource(fgb_path)
+ds = ogr.GetDriverByName("GPKG").CreateDataSource(fgb_path)
 layer = ds.CreateLayer(layer_name, geom_type=ogr.wkbPolygon, srs=sr)
-layer.SetMetadataItem("XRES", "0.000833")
-layer.SetMetadataItem("YRES", "0.000833")
-layer.SetMetadataItem("XSIZE", "432004")
-layer.SetMetadataItem("YSIZE", "208800")
+layer.SetMetadataItem("XRES", "0.000833333333333")
+layer.SetMetadataItem("YRES", "0.000833333333333")
+#layer.SetMetadataItem("XSIZE", "432004")
+#layer.SetMetadataItem("YSIZE", "208800")
 layer.SetMetadataItem("DATA_TYPE", "Float32")
 layer.SetMetadataItem("COLOR_INTERPRETATION", "undefined")
 layer.SetMetadataItem("MINX", "-180")
