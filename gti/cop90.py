@@ -52,6 +52,9 @@ for child in root:
 layer_name = "cop90"
 fgb_path = f"{layer_name}.fgb"
 
+sr = osr.SpatialReference()
+sr.SetFromUserInput("OGC:CRS84")
+
 ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource(fgb_path)
 layer = ds.CreateLayer(layer_name, geom_type=ogr.wkbPolygon, srs=sr)
 layer.SetMetadataItem("XRES", "0.000833")
@@ -69,8 +72,6 @@ layer.SetMetadataItem("BANDCOUNT", "1")
 
 
 
-sr = osr.SpatialReference()
-sr.SetFromUserInput("OGC:CRS84")
 
 # Add an ID field
 idField = ogr.FieldDefn("id", ogr.OFTInteger)
