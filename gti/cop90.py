@@ -81,7 +81,6 @@ layer.CreateField(locField)
 
 # Create the feature and set values
 featureDefn = layer.GetLayerDefn()
-featureDefn.GetGeomFieldDefn(0).SetSpatialRef(sr)
 
 for i in range(0, len(xmin)) : 
  extent = [xmin[i], xmax[i], ymin[i], ymax[i]]
