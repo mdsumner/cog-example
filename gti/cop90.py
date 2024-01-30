@@ -7,11 +7,11 @@ from osgeo import osr
 def create_poly(extent):
   # Create a Polygon from the extent list
   ring = ogr.Geometry(ogr.wkbLinearRing)
-  ring.AddPoint(extent[0],extent[2])
-  ring.AddPoint(extent[1], extent[2])
-  ring.AddPoint(extent[1], extent[3])
-  ring.AddPoint(extent[0], extent[3])
-  ring.AddPoint(extent[0],extent[2])
+  ring.AddPoint_2D(extent[0],extent[2])
+  ring.AddPoint_2D(extent[1], extent[2])
+  ring.AddPoint_2D(extent[1], extent[3])
+  ring.AddPoint_2D(extent[0], extent[3])
+  ring.AddPoint_2D(extent[0],extent[2])
   poly = ogr.Geometry(ogr.wkbPolygon)
   poly.AddGeometry(ring)
   return poly
@@ -57,17 +57,21 @@ sr.SetFromUserInput("OGC:CRS84")
 
 ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource(fgb_path)
 layer = ds.CreateLayer(layer_name, geom_type=ogr.wkbPolygon, srs=sr)
-layer.SetMetadataItem("XRES", "0.000833")
-layer.SetMetadataItem("YRES", "0.000833")
-layer.SetMetadataItem("XSIZE", "432004")
-layer.SetMetadataItem("YSIZE", "208800")
+layer.SetMetadataItem("RESX", "0.000833")
+layer.SetMetadataItem("RESY", "0.000833")
+#layer.SetMetadataItem("XSIZE", "432004")
+#layer.SetMetadataItem("YSIZE", "208800")
 layer.SetMetadataItem("DATA_TYPE", "Float32")
 layer.SetMetadataItem("COLOR_INTERPRETATION", "undefined")
-layer.SetMetadataItem("MINX", "-180")
-layer.SetMetadataItem("MAXX", "180")
-layer.SetMetadataItem("MINY", "-90")
-layer.SetMetadataItem("MAXY", "90")
-layer.SetMetadataItem("BANDCOUNT", "1")
+layer.SetMetadataItem("MINX", "-180.0")
+layer.SetMetadataItem("MAXX", "180.0")
+layer.SetMetadataItem("MINY", "-90.0")
+layer.SetMetadataItem("MAXY", "90.0")
+layer.SetMetadataItem("BAND_COUNT", "1")
+layer.SetMetadataItem("SRS", "OGC:CRS84")
+layer.SetMetadataItem("BLOCKXSIZE", "2048")
+layer.SetMetadataItem("BLOCKYSIZE", "2048")
+
 
 
 
