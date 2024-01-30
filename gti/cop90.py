@@ -1,6 +1,8 @@
 from osgeo import gdal
 import xml.etree.ElementTree as ET
 from osgeo import ogr
+from osgeo import osr
+
 
 def create_poly(extent):
   # Create a Polygon from the extent list
@@ -48,11 +50,25 @@ for child in root:
             locations.append(source.text)
             
 layer_name = "cop90"
-fgb_path = f"{layer_name}.shp"
+fgb_path = f"{layer_name}.fgb"
 
-ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(fgb_path)
-layer = ds.CreateLayer(layer_name, geom_type=ogr.wkbPolygon)
-from osgeo import osr
+ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource(fgb_path)
+layer = ds.CreateLayer(layer_name, geom_type=ogr.wkbPolygon, srs=sr)
+layer.SetMetadataItem("XRES", "0.000833")
+layer.SetMetadataItem("YRES", "0.000833")
+layer.SetMetadataItem("XSIZE", "432004")
+layer.SetMetadataItem("YSIZE", "208800")
+layer.SetMetadataItem("DATA_TYPE", "Float32")
+layer.SetMetadataItem("COLOR_INTERPRETATION", "undefined")
+layer.SetMetadataItem("MINX", "-180")
+layer.SetMetadataItem("MAXX", "180")
+layer.SetMetadataItem("MINY", "-90")
+layer.SetMetadataItem("MAXY", "90")
+layer.SetMetadataItem("BANDCOUNT", "1")
+
+
+
+
 sr = osr.SpatialReference()
 sr.SetFromUserInput("OGC:CRS84")
 
