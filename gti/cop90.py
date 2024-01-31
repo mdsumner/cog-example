@@ -50,7 +50,7 @@ for child in root:
             locations.append(source.text)
             
 layer_name = "cop90"
-fgb_path = f"{layer_name}.gti.gpkg"
+fgb_path = f"{layer_name}.gti.fgb"
 
 sr = osr.SpatialReference()
 sr.SetFromUserInput("OGC:CRS84")
