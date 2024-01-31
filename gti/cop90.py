@@ -5,8 +5,6 @@ from osgeo import osr
 
 from urllib.request import urlopen
 
-
-
 def create_poly(extent):
   # Create a Polygon from the extent list
   ring = ogr.Geometry(ogr.wkbLinearRing)
@@ -20,7 +18,7 @@ def create_poly(extent):
   return poly
 
 gdal.UseExceptions()
-resxy = [0.000833333333333, 0.000833333333333]
+
 urldirname = "https://opentopography.s3.sdsc.edu/raster/COP90"
 basename = "COP90_hh.vrt"
 url = f"{urldirname}/{basename}"
@@ -30,6 +28,9 @@ fgb_path = f"{layer_name}.gti.fgb"
 
 vrt = gdal.Open(f"/vsicurl/{url}")
 gt = vrt.GetGeoTransform()
+resxy = [gt[1], -gt[5]]
+exxy = [gt[0], gt[0] + vrt.RasterXSize * resxy[0], 
+        gt[3] + vrt.RasterYSize * -resxy[1], gt[3]]
 con = urlopen(url) 
 tree = ET.parse(con)
 
@@ -64,21 +65,21 @@ for child in root:
 sr = osr.SpatialReference()
 sr.SetFromUserInput("EPSG:4326")
 
+
 ds = ogr.GetDriverByName(drivername).CreateDataSource(fgb_path)
 layer = ds.CreateLayer(layer_name, geom_type=ogr.wkbPolygon, srs=sr)
 layer.SetMetadataItem("RESX", str(resxy[0]))
 layer.SetMetadataItem("RESY", str(resxy[1]))
 layer.SetMetadataItem("DATA_TYPE", "Float32")
 layer.SetMetadataItem("COLOR_INTERPRETATION", "undefined")
-layer.SetMetadataItem("MINX", "-180.0")
-layer.SetMetadataItem("MAXX", "180.0")
-layer.SetMetadataItem("MINY", "-90.0")
-layer.SetMetadataItem("MAXY", "90.0")
+layer.SetMetadataItem("MINX", str(exxy[0]))
+layer.SetMetadataItem("MAXX", str(exxy[1]))
+layer.SetMetadataItem("MINY", str(exxy[2]))
+layer.SetMetadataItem("MAXY", str(exxy[3]))
 layer.SetMetadataItem("BAND_COUNT", "1")
 layer.SetMetadataItem("SRS", "EPSG:4326")
-layer.SetMetadataItem("BLOCKXSIZE", "2048")
-layer.SetMetadataItem("BLOCKYSIZE", "2048")
-
+#layer.SetMetadataItem("BLOCKXSIZE", "2048")
+#layer.SetMetadataItem("BLOCKYSIZE", "2048")
 
 # Add an ID field
 idField = ogr.FieldDefn("id", ogr.OFTInteger)
