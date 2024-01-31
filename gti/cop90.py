@@ -50,12 +50,13 @@ for child in root:
             locations.append(source.text)
             
 layer_name = "cop90"
+drivername = "FlatGeobuf"
 fgb_path = f"{layer_name}.gti.fgb"
 
 sr = osr.SpatialReference()
 sr.SetFromUserInput("OGC:CRS84")
 
-ds = ogr.GetDriverByName("GPKG").CreateDataSource(fgb_path)
+ds = ogr.GetDriverByName(drivername).CreateDataSource(fgb_path)
 layer = ds.CreateLayer(layer_name, geom_type=ogr.wkbPolygon, srs=sr)
 layer.SetMetadataItem("XRES", "0.000833333333333")
 layer.SetMetadataItem("YRES", "0.000833333333333")
