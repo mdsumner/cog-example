@@ -1,21 +1,23 @@
-from osgeo import gdal
 import xml.etree.ElementTree as ET
-from osgeo import ogr
-from osgeo import osr
-
 from urllib.request import urlopen
 
+from osgeo import gdal, ogr, osr
+
+
 def create_poly(extent):
-  # Create a Polygon from the extent list
-  ring = ogr.Geometry(ogr.wkbLinearRing)
-  ring.AddPoint_2D(extent[0],extent[2])
-  ring.AddPoint_2D(extent[1], extent[2])
-  ring.AddPoint_2D(extent[1], extent[3])
-  ring.AddPoint_2D(extent[0], extent[3])
-  ring.AddPoint_2D(extent[0],extent[2])
-  poly = ogr.Geometry(ogr.wkbPolygon)
-  poly.AddGeometry(ring)
-  return poly
+    # Create a Polygon from the extent list
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    ring.AddPoint_2D(extent[0], extent[2])
+    ring.AddPoint_2D(extent[1], extent[2])
+    ring.AddPoint_2D(extent[1], extent[3])
+    ring.AddPoint_2D(extent[0], extent[3])
+    ring.AddPoint_2D(extent[0], extent[2])
+
+    poly = ogr.Geometry(ogr.wkbPolygon)
+    poly.AddGeometry(ring)
+
+    return poly
+
 
 gdal.UseExceptions()
 
@@ -29,38 +31,34 @@ fgb_path = f"{layer_name}.gti.fgb"
 vrt = gdal.Open(f"/vsicurl/{url}")
 gt = vrt.GetGeoTransform()
 resxy = [gt[1], -gt[5]]
-exxy = [gt[0], gt[0] + vrt.RasterXSize * resxy[0], 
+exxy = [gt[0], gt[0] + vrt.RasterXSize * resxy[0],
         gt[3] + vrt.RasterYSize * -resxy[1], gt[3]]
-con = urlopen(url) 
+con = urlopen(url)
 tree = ET.parse(con)
 
-root = tree.getroot()
-locations = []
-xmin = [0.0 for x in range(0, len(vrt.GetFileList()) - 1)]
-xmax = [0.0 for x in range(0, len(vrt.GetFileList()) - 1)]
-ymin = [0.0 for x in range(0, len(vrt.GetFileList()) - 1)]
-ymax = [0.0 for x in range(0, len(vrt.GetFileList()) - 1)]
+file_extents = {}
 
-i = 0
+# Get all the SimpleSource items from the XML tree
+for item in tree.findall(".//SimpleSource"):
+    # Get the DstRect item
+    dstrect = item.find("DstRect")
+    # Get the SourceFilename item
+    srcfilename = item.find("SourceFilename")
 
-for child in root: 
-  if child.tag == "VRTRasterBand": 
-    for element in child: 
-      if element.tag == "SimpleSource":
-        for source in element: 
-          if source.tag == "DstRect": 
-            xOff = float(source.get("xOff"))
-            yOff = float(source.get("yOff"))
-            xSize = float(source.get("xSize"))
-            ySize = float(source.get("ySize"))
-            xmin[i] = gt[0] + xOff * gt[1]
-            xmax[i] = gt[0] + gt[1] * (xSize + xOff)
-            ymax[i] = gt[3] + yOff * gt[5]
-            ymin[i] = gt[3] + gt[5] * (ySize + yOff)
-            i = i + 1
-          if source.tag == "SourceFilename": 
-            locations.append(source.text)
-            
+    # Get the xOff, yOff, xSize, ySize from the DstRect item
+    xOff = float(dstrect.get("xOff"))
+    yOff = float(dstrect.get("yOff"))
+    xSize = float(dstrect.get("xSize"))
+    ySize = float(dstrect.get("ySize"))
+
+    extent = [
+        gt[0] + xOff * gt[1],
+        gt[0] + gt[1] * (xSize + xOff),
+        gt[3] + yOff * gt[5],
+        gt[3] + gt[5] * (ySize + yOff)
+    ]
+
+    file_extents[srcfilename.text] = extent
 
 sr = osr.SpatialReference()
 sr.SetFromUserInput("EPSG:4326")
@@ -78,8 +76,6 @@ layer.SetMetadataItem("MINY", str(exxy[2]))
 layer.SetMetadataItem("MAXY", str(exxy[3]))
 layer.SetMetadataItem("BAND_COUNT", "1")
 layer.SetMetadataItem("SRS", "EPSG:4326")
-#layer.SetMetadataItem("BLOCKXSIZE", "2048")
-#layer.SetMetadataItem("BLOCKYSIZE", "2048")
 
 # Add an ID field
 idField = ogr.FieldDefn("id", ogr.OFTInteger)
@@ -90,19 +86,10 @@ layer.CreateField(locField)
 # Create the feature and set values
 featureDefn = layer.GetLayerDefn()
 
-for i in range(0, len(xmin)) : 
- extent = [xmin[i], xmax[i], ymin[i], ymax[i]]
- feature = ogr.Feature(featureDefn)
- geom = create_poly(extent)
- feature.SetGeometry(geom)
- feature.SetField("id", i)
- feature.SetField("location", f'/vsicurl/{urldirname}/{locations[i]}')
- layer.CreateFeature(feature)
- feature = None
- geom = None
-
-layer = None
-ds = None
-  
-    
-    
+for n, (file, extent) in enumerate(file_extents.items()):
+    feature = ogr.Feature(featureDefn)
+    geom = create_poly(extent)
+    feature.SetGeometry(geom)
+    feature.SetField("id", n)
+    feature.SetField("location", f'/vsicurl/{urldirname}/{file}')
+    layer.CreateFeature(feature)
